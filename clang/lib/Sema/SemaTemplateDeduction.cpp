@@ -3289,6 +3289,39 @@ static TemplateDeductionResult FinishTemplateArgumentDeduction(
   return TemplateDeductionResult::Success;
 }
 
+static int foobar () {
+  // Unevaluated SFINAE context.
+  EnterExpressionEvaluationContext Unevaluated(
+      S, Sema::ExpressionEvaluationContext::Unevaluated);
+  Sema::SFINAETrap Trap(S);
+
+  Sema::ContextRAII SavedContext(S, getAsDeclContextOrEnclosing(Partial));
+
+  // C++ [temp.deduct.type]p2:
+  //   [...] or if any template argument remains neither deduced nor
+  //   explicitly specified, template argument deduction fails.
+  SmallVector<TemplateArgument, 4> SugaredBuilder, CanonicalBuilder;
+  if (auto Result = ConvertDeducedTemplateArguments(S, 
+                                                    TD, 
+                                                    /*IsPartialOrdering=*/false, 
+                                                    Deduced, 
+                                                    Info, 
+                                                    SugaredBuilder,
+                                                    CanonicalBuilder);
+  if (auto Result = ConvertDeducedTemplateArguments(S, 
+                                                    Partial, 
+                                                    IsPartialOrdering, 
+                                                    Deduced, 
+                                                    Info, 
+                                                    SugaredBuilder,
+          CanonicalBuilder);
+
+    Result != TemplateDeductionResult::Success)
+  return Result;
+
+
+}
+
 /// Perform template argument deduction to determine whether the given template
 /// arguments match the given class or variable template partial specialization
 /// per C++ [temp.class.spec.match].
